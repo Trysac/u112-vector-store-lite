@@ -1,0 +1,16 @@
+# vector-store-lite
+
+> Embedded vector store on stdlib sqlite3 with float32 blobs, metadata filters compiled to parameterised SQL, exact search and seeded random-hyperplane LSH Python package `trysac-vector-store-lite`, import name `vector_store_lite`, MIT licensed,
+> Python >= 3.10, no runtime dependencies.
+
+## Docs
+
+- [README](README.md): problem, install, usage example
+- [AGENTS](AGENTS.md): commands, folder map, conventions, limits
+- [Architecture](docs/ARCHITECTURE.md): shape of the package and its public API
+- [Testing](docs/TESTING.md): how to run and extend the tests
+
+## Optional
+
+- [Stack](docs/STACK.md): tools used and discarded
+- [Changelog](CHANGELOG.md): release history
