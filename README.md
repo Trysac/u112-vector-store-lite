@@ -1,48 +1,44 @@
-# vector-store-lite
+# trysac-vector-store-lite
 
-[![PyPI version](https://img.shields.io/pypi/v/trysac-vector-store-lite)](https://pypi.org/project/trysac-vector-store-lite/)
-[![License: MIT](https://img.shields.io/pypi/l/trysac-vector-store-lite)](LICENSE)
-[![CI](https://github.com/Trysac/u112-vector-store-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/Trysac/u112-vector-store-lite/actions/workflows/ci.yml)
-
-Embedded vector store on stdlib sqlite3 with float32 blobs, metadata filters compiled to parameterised SQL, exact search and seeded random-hyperplane LSH
+Embedded vector store on stdlib sqlite3 with float32 blobs, metadata filters compiled to parameterised SQL, exact search and seeded random-hyperplane LSH.
 
 ## Problem
 
-Describe in two or three sentences the concrete problem this utility solves, who hits it, and what
-they do today without it. Replace this paragraph when the first real feature lands.
+Small RAG projects need persistent vector search with metadata filters, but a dedicated vector database server is heavy, and an in-memory list is lost on restart. SQLite is ubiquitous, yet ad-hoc vector implementations usually interpolate filter values into SQL queries, leading to SQL injection risks and type confusion.
 
-## Install
+## Installation
 
-```sh
+```bash
 pip install trysac-vector-store-lite
-# or
-uv add trysac-vector-store-lite
 ```
-
-Requires Python 3.10 or newer. No runtime dependencies.
 
 ## Usage
 
 ```python
-import vector_store_lite
+from vector_store_lite import Record, VectorStore
 
-# normalize() trims surrounding whitespace and lower-cases the text.
-print(vector_store_lite.normalize("  Hello World "))  # -> "hello world"
-
-# Blank input is rejected explicitly instead of returning an empty string.
-try:
-    vector_store_lite.normalize("   ")
-except ValueError as exc:
-    print(f"rejected: {exc}")
+with VectorStore.open(":memory:", dim=3, metric="cosine") as store:
+    store.upsert(
+        [
+            Record(id="doc1", vector=[1.0, 0.0, 0.0], metadata={"topic": "ai"}),
+            Record(id="doc2", vector=[0.0, 1.0, 0.0], metadata={"topic": "db"}),
+        ]
+    )
+    hits = store.search([1.0, 0.1, 0.0], k=1, where={"topic": "ai"})
+    print(hits[0].id, hits[0].score)
 ```
 
-## Documentation
+## Public API Summary
 
-- [Architecture](docs/ARCHITECTURE.md) and [decisions](docs/decisions/)
-- [Testing](docs/TESTING.md) and [security](docs/SECURITY.md)
-- [Project record](docs/PROJECT.md) and [stack](docs/STACK.md)
-- [Changelog](CHANGELOG.md) and [contributing guide](CONTRIBUTING.md)
+- `VectorStore.open(path, *, dim, metric='cosine', lsh_bits=16, lsh_tables=4, seed=0, on_event=None)`: Open/create a SQLite-backed store.
+- `upsert(records: Iterable[Record]) -> int`: Atomic insertion/update.
+- `delete(ids: Iterable[str]) -> int`: Atomic deletion.
+- `search(vector, *, k=10, where=None, exact=False) -> list[Hit]`: Perform exact scan or LSH index search.
+- `count(where=None) -> int`: Returns count of records matching filter.
+- `VectorStoreError`: Raised for any operation failure (codes: `dimension_mismatch`, `dimension_conflict`, `invalid_vector`, `invalid_filter`, `invalid_id`, `invalid_metadata`, `invalid_k`, `invalid_config`).
 
-## License
+## Why not Chroma or sqlite-vec?
 
-[MIT](LICENSE) (c) 2026 Miguel Gomez
+Unlike Chroma, `trysac-vector-store-lite` requires no server/daemon. Unlike `sqlite-vec`, it relies solely on the standard library (`sqlite3` with bundled `json1`) and requires no compilation of native C/Rust extensions, making it portable and zero-dependency.
+
+See [docs/SECURITY.md](docs/SECURITY.md) for vulnerability policy.

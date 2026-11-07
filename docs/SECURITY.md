@@ -2,18 +2,13 @@
 
 ## Threat model
 
-`trysac-vector-store-lite` is a pure library without I/O. The main risks are:
+### Defended
 
-- **Supply chain**: a compromised dependency or CI action. Mitigation: no runtime dependencies,
-  Dependabot weekly updates, actions pinned to major versions, minimal workflow permissions.
-- **Leaked secrets**: tokens committed by mistake. Mitigation: `gitleaks` runs in the local gates
-  and in CI; `.env` files are git-ignored.
-- **Untrusted input**: callers may pass hostile strings. Mitigation: validate input and fail with
-  explicit exceptions; never `eval`, `exec` or deserialize untrusted data.
+- **SQL Injection**: Metadata filters are compiled into parameterized SQL using `json_extract()` and `json_type()`. No user-provided field names or values are interpolated as strings into the raw SQL query.
+- **Type Confusion**: Boolean values are compared using `json_type(..., '$.field')`, ensuring that a metadata boolean `True` never matches an integer `1`.
 
-## Publishing
+### Not defended
 
-Releases are published to PyPI with trusted publishing (OIDC) when available, never with a
-long-lived token stored in the repository.
-
-To report a vulnerability, see [SECURITY.md](../SECURITY.md).
+- **Concurrency**: The library is not thread-safe. Using the same `VectorStore` instance across threads may corrupt state.
+- **File Integrity**: Malicious modification of the underlying SQLite file can lead to arbitrary data return or crash the reader.
+- **Memory Exhaustion**: The library does not limit the size of loaded metadata dicts or result lists beyond standard Python/SQLite resource limits.
