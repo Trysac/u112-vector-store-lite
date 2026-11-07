@@ -2,25 +2,39 @@
 
 ## Objective
 
-Embedded vector store on stdlib sqlite3 with float32 blobs, metadata filters compiled to parameterised SQL, exact search and seeded random-hyperplane LSH
+Embedded vector store on stdlib sqlite3 with float32 blobs, parameterised metadata filters, exact search and seeded random-hyperplane LSH.
 
 ## Scope
 
-- In scope: the public API documented in [README.md](../README.md), typed and tested.
-- Out of scope: anything that needs runtime dependencies or I/O without an accepted ADR.
+- The public Python API (`VectorStore`, `Record`, `Hit`, `VectorStoreError`).
+- Persistence via SQLite.
+- Metadata filtering using parameterized SQL (via `json_extract`/`json_type`).
+- LSH approximate search.
 
-## Timeline
+## Out-of-scope
 
-| Date | Event |
-|---|---|
-| 2026 | Repository created from the factory utility template. |
+- HNSW or IVF indexing.
+- Third-party extensions like `sqlite-vec`.
+- Hybrid keyword/vector search.
+- Concurrency across processes beyond SQLite's standard file locking.
+- Exact search performance for datasets > 100,000 vectors.
 
 ## Effort metrics
 
-Measured values only; a value that has not been measured stays "pending measurement".
-
 | Metric | Value |
 |---|---|
-| Tokens (input / output) | pending measurement |
+| Tokens (input / output) | 1110346 / 58914 |
 | Hours (human) | pending measurement |
-| Cost (USD) | pending measurement |
+| Cost (USD) | 0.3131 |
+
+## Factory run u112 (measured from API usage)
+
+| Phase | Model | Batch | Input | Output | Cache write | Cache read | Cost (USD) |
+|---|---|---|---|---|---|---|---|
+| generation | gemini-3.8-flash | yes | 4686 | 48061 | 0 | 0 | 0.0919 |
+| fix-1 | gemini-3.8-flash | no | 80150 | 7996 | 0 | 662859 | 0.1398 |
+| fix-2 | gemini-3.8-flash | no | 29891 | 716 | 0 | 88117 | 0.0317 |
+| audit | gemini-3.1-flash-lite | no | 45983 | 267 | 0 | 65177 | 0.0135 |
+| docs | gemini-3.1-flash-lite | no | 133483 | 1874 | 0 | 0 | 0.0362 |
+
+Total: $0.3131. Prices: Anthropic list prices.
