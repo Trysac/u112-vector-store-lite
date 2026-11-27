@@ -8,8 +8,10 @@ Small RAG projects need persistent vector search with metadata filters, but a de
 
 ## Installation
 
+Not published to PyPI yet. Install it from GitHub:
+
 ```bash
-pip install trysac-vector-store-lite
+pip install "git+https://github.com/Trysac/u112-vector-store-lite"
 ```
 
 ## Usage
